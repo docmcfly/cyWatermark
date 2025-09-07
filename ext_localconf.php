@@ -1,14 +1,10 @@
 <?php
 
-use Cylancer\Resource\Processing\LocalCropScaleMaskHelper;
-
-
-
 defined('TYPO3') || die();
 
 use Cylancer\CyWatermark\Hook\WatermarkHookImpl;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
-
+use Cylancer\CyWatermark\Hook\DataHandlerHook;
 
 /**
  *
@@ -33,3 +29,4 @@ $GLOBALS['TYPO3_CONF_VARS']['SYS']['fal']['processors']['CyWatermarkProcessor'] 
     'before' => ['LocalImageProcessor'],
 ];
 
+$GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_tcemain.php']['processDatamapClass']['cy_watermark'] = DataHandlerHook::class ;

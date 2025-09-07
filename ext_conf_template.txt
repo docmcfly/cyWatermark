@@ -2,4 +2,5 @@
 image_save_options = {"jpeg":{"quality":75},"webp":{"quality":80},"bmp":{"compressed":true},"png":{"quality":-1,"filter":"NO_FILTER"}}
 # cat=basic; type=string; label=Supported mime types (comma separated)
 mime_types = image/jpeg,image/png,image/gif,image/webp,image/bmp
-
+# cat=basic; type=int+; label=Minimum image edge length (positive Integer)
+min_image_edge_length = 150
