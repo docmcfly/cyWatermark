@@ -15,21 +15,21 @@ use TYPO3\CMS\Core\Resource\Processing\TaskInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 
-class WatermarkHookImpl implements ProcessorInterface //, LoggerAwareInterface
-{ /**
+class WatermarkHookImpl implements ProcessorInterface 
+{
+    
+    /**
   * Returns TRUE if this processor can process the given task.
   *
   * @return bool
   */
-    public function canProcessTask(TaskInterface $task): bool
+     public function canProcessTask(TaskInterface $task): bool
     {
-        debug($task, "wmhi");
         if (
             GeneralUtility::makeInstance(\TYPO3\CMS\Core\Resource\Processing\LocalImageProcessor::class)->canProcessTask($task)
             && $this->shouldProcess($task->getTargetFile())
         ) {
             $sourceFile = $task->getSourceFile();
-            debug($sourceFile->getMetaData()->get()['tx_cywatermark_watermark_source']);
             //  debug($sourceFile->getMetaData()->get()['tx_cywatermark_watermark_source']);
             switch (SourceOption::tryFrom($sourceFile->getMetaData()->get()['tx_cywatermark_watermark_source'])) {
                 case SourceOption::NONE:
@@ -92,28 +92,25 @@ class WatermarkHookImpl implements ProcessorInterface //, LoggerAwareInterface
         if ('Image.CropScaleMask' !== $processedFile->getTaskIdentifier()) {
             return false;
         }
-        debug($processedFile->getTaskIdentifier());
-        // $processionConfiguration = $processedFile->getProcessingConfiguration();
-        // $iconSize = 150;
-        // if (
-        //     (isset($processionConfiguration['maxWidth']) && $processionConfiguration['maxWidth'] <= $iconSize)
-        //     || (isset($processionConfiguration['maxHeight']) && $processionConfiguration['maxHeight'] <= $iconSize)
-        //     || (isset($processionConfiguration['width']) && $processionConfiguration['width'] <= $iconSize)
-        //     || (isset($processionConfiguration['height']) && $processionConfiguration['height'] <= $iconSize)
-        // ) {
-        //     return false;
-        // }
+        $processionConfiguration = $processedFile->getProcessingConfiguration();
+        $iconSize = $this->getMinimumEdgeLength();
+
+        if ( !($iconSize === false) &&
+            (isset($processionConfiguration['maxWidth']) && $processionConfiguration['maxWidth'] <= $iconSize)
+            || (isset($processionConfiguration['maxHeight']) && $processionConfiguration['maxHeight'] <= $iconSize)
+            || (isset($processionConfiguration['width']) && $processionConfiguration['width'] <= $iconSize)
+            || (isset($processionConfiguration['height']) && $processionConfiguration['height'] <= $iconSize)
+        ) {
+            return false;
+        }
 
         if (!WatermarkService::isSupportedMimeType($processedFile->getOriginalFile()->getMimeType())) {
-            debug("isSupportedMimeType");
             return false;
         }
 
         if (!$this->isStorageLocalAndWritable($processedFile)) {
-            debug("isStorageLocalAndWritable");
             return false;
         }
- debug("return true");
         return true;
     }
 
@@ -192,6 +189,17 @@ class WatermarkHookImpl implements ProcessorInterface //, LoggerAwareInterface
                 $e->getMessage()
             ));
         }
+    }
+
+
+
+    private static function getMinimumEdgeLength(): int|bool
+    {
+        $minImageSize = Configuration::get('min_image_edge_length');
+        if ($minImageSize != null) {
+            return intval($minImageSize);
+        }
+        return false;
     }
 
 

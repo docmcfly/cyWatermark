@@ -9,7 +9,6 @@ namespace Cylancer\CyWatermark\Resource\Processing;
 
 use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Core\Resource\Processing\TaskInterface;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Processes Local Images files
@@ -26,7 +25,7 @@ class LocalImageProcessor extends \TYPO3\CMS\Core\Resource\Processing\LocalImage
      */
     public function __construct()
     {
-        $this->helpers['CropScaleMask'] = GeneralUtility::makeInstance(LocalCropScaleMaskHelper::class, true);
+        $this->helpers['CropScaleMask'] = new LocalCropScaleMaskHelper(true);
     }
 
 

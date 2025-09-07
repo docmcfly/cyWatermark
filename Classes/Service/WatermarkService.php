@@ -14,11 +14,13 @@ use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\FileInterface;
 use TYPO3\CMS\Core\Resource\FileRepository;
 use TYPO3\CMS\Core\Resource\ProcessedFile;
+use TYPO3\CMS\Core\Resource\ProcessedFileRepository;
+use TYPO3\CMS\Core\SingletonInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 
 
-final class WatermarkService
+final class WatermarkService implements SingletonInterface
 {
 
     use LoggerAwareTrait;
@@ -26,9 +28,12 @@ final class WatermarkService
     private Connection $categoriesConnection;
     private FileRepository $fileRepository;
 
-    public function __construct()
-    {
-        $this->categoriesConnection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('sys_category_record_mm');
+    public function __construct(
+        private readonly ConnectionPool $connectionPool,
+        private readonly ProcessedFileRepository $processedFileRepository,
+
+    ) {
+        $this->categoriesConnection = $this->connectionPool->getConnectionForTable('sys_category_record_mm');
         $this->fileRepository = GeneralUtility::makeInstance(FileRepository::class);
     }
 
@@ -140,7 +145,7 @@ final class WatermarkService
         ?int $relativeSize
 
     ): void {
-      
+
         $padding = 10;
 
         $background = $this->createImage($processedFile);
@@ -317,5 +322,75 @@ final class WatermarkService
             }
         }
         return PNG_FILTER_NONE;
+    }
+
+
+    public function clearProcessedFileCacheFromCategory($categoryUid): void
+    { 
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_category_record_mm');
+        $result = $queryBuilder
+            ->select('sfpf.uid')
+            ->from('sys_category_record_mm', 'crm')
+            ->join(
+                'crm',
+                'sys_file_metadata',
+                'sfm',
+                $queryBuilder->expr()->eq('crm.uid_foreign', $queryBuilder->quoteIdentifier('sfm.uid'))
+            )
+            ->join(
+                'sfm',
+                'sys_file',
+                'sf',
+                $queryBuilder->expr()->eq('sf.uid', $queryBuilder->quoteIdentifier('sfm.file'))
+            )
+            ->join(
+                'sf',
+                'sys_file_processedfile',
+                'sfpf',
+                $queryBuilder->expr()->eq('sfpf.original', $queryBuilder->quoteIdentifier('sf.uid'))
+            )
+            ->where("tablenames = 'sys_file_metadata'")
+            ->andWhere($queryBuilder->expr()->eq(
+                'crm.uid_local',
+                $queryBuilder->createNamedParameter($categoryUid)
+            ))
+            ->executeQuery()
+            ->fetchFirstColumn();
+        if (!empty($result)) {
+            foreach ($result as $uid) {
+                $this->processedFileRepository->findByUid($uid)->delete(true);
+            }
+        }
+    }
+
+    public function clearProcessedFileCacheFromFileMetaData($metaDataUid)
+    {
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_category_record_mm');
+        $result = $queryBuilder
+            ->select('sfpf.uid')
+            ->from('sys_file_metadata', 'sfm')
+            ->join(
+                'sfm',
+                'sys_file',
+                'sf',
+                $queryBuilder->expr()->eq('sf.uid', $queryBuilder->quoteIdentifier('sfm.file'))
+            )
+            ->join(
+                'sf',
+                'sys_file_processedfile',
+                'sfpf',
+                $queryBuilder->expr()->eq('sfpf.original', $queryBuilder->quoteIdentifier('sf.uid'))
+            )
+            ->where($queryBuilder->expr()->eq(
+                'sfm.uid',
+                $queryBuilder->createNamedParameter($metaDataUid)
+            ))
+            ->executeQuery()
+            ->fetchFirstColumn();
+        if (!empty($result)) {
+            foreach ($result as $uid) {
+                $this->processedFileRepository->findByUid($uid)->delete(true);
+            }
+        }
     }
 }

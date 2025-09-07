@@ -2,8 +2,10 @@
 
 ## Change log
 
+* 0.9.0 UPD Add a clean mechanismus. Cached images with watermark is deleted if the a category or files meta data is changed.
+* 0.8.0 UPD Add a minimum edge length configuration.
 * 0.7.0 FIX Fix the database defaults *thanks to Garvin Hicking*
-* 0.6.0 FIX Fix the composer file. 
+* 0.6.0 FIX Fix the composer file.
 * 0.5.0 RMV Remove XClass api call.
 * 0.4.1 FIX Fix an option text.
 * 0.4.0 UPD Connect the extension settings to the watermark service.
@@ -69,6 +71,14 @@ This extension allows you to apply watermarks to images in TYPO3.
    image/jpeg,image/png,image/gif,image/webp,image/bmp
    ```
 
+* **Minimum edge length (positive Integer)**
+   \
+   The watermark mechanism works only for images with the specified edge length:
+
+    ```Code
+   150
+   ```
+
 ### Usage
 
 1. **Preparation**
@@ -101,6 +111,6 @@ This extension allows you to apply watermarks to images in TYPO3.
 
 ## Troubleshooting
 
-Watermarks are only stamped in on first display. If you change watermark settings on images that have already been displayed, the updates won’t appear immediately. The most radical and effective solution is to delete the _processed_ files:
+Watermarks are only stamped in on first display. If you change watermark settings on images that have already been displayed, the updates won’t appear immediately. The most radical and effective solution is to delete the processed files:
 
 ![Deleting the \_processed\_ files (last entry in the list)](Documentation/Images/workaround-remove-processed-files.png)
