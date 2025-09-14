@@ -2,6 +2,7 @@
 
 ## Change log
 
+* 0.9.1 FIX The minimum image edge filter ignors values with zero and with null.  
 * 0.9.0 UPD Add a clean mechanismus. Cached images with watermark is deleted if the a category or files meta data is changed.
 * 0.8.0 UPD Add a minimum edge length configuration.
 * 0.7.0 FIX Fix the database defaults *thanks to Garvin Hicking*

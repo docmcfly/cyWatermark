@@ -15,22 +15,21 @@ use TYPO3\CMS\Core\Resource\Processing\TaskInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 
-class WatermarkHookImpl implements ProcessorInterface 
+class WatermarkHookImpl implements ProcessorInterface
 {
-    
+
     /**
-  * Returns TRUE if this processor can process the given task.
-  *
-  * @return bool
-  */
-     public function canProcessTask(TaskInterface $task): bool
+     * Returns TRUE if this processor can process the given task.
+     *
+     * @return bool
+     */
+    public function canProcessTask(TaskInterface $task): bool
     {
         if (
             GeneralUtility::makeInstance(\TYPO3\CMS\Core\Resource\Processing\LocalImageProcessor::class)->canProcessTask($task)
             && $this->shouldProcess($task->getTargetFile())
         ) {
             $sourceFile = $task->getSourceFile();
-            //  debug($sourceFile->getMetaData()->get()['tx_cywatermark_watermark_source']);
             switch (SourceOption::tryFrom($sourceFile->getMetaData()->get()['tx_cywatermark_watermark_source'])) {
                 case SourceOption::NONE:
                     return false;
@@ -87,6 +86,17 @@ class WatermarkHookImpl implements ProcessorInterface
 
     }
 
+    private static function isLarger(array $configuration, string $key, int $minimum): bool
+    {
+        if (isset($configuration[$key])) {
+            $value = $configuration[$key];
+            return $value > 0 && $value >= $minimum;
+        } else {
+            return false;
+        }
+    }
+
+
     private function shouldProcess(ProcessedFile $processedFile): bool
     {
         if ('Image.CropScaleMask' !== $processedFile->getTaskIdentifier()) {
@@ -95,11 +105,13 @@ class WatermarkHookImpl implements ProcessorInterface
         $processionConfiguration = $processedFile->getProcessingConfiguration();
         $iconSize = $this->getMinimumEdgeLength();
 
-        if ( !($iconSize === false) &&
-            (isset($processionConfiguration['maxWidth']) && $processionConfiguration['maxWidth'] <= $iconSize)
-            || (isset($processionConfiguration['maxHeight']) && $processionConfiguration['maxHeight'] <= $iconSize)
-            || (isset($processionConfiguration['width']) && $processionConfiguration['width'] <= $iconSize)
-            || (isset($processionConfiguration['height']) && $processionConfiguration['height'] <= $iconSize)
+        if (
+            !($iconSize === false) &&
+            !(
+                WatermarkHookImpl::isLarger($processionConfiguration, 'maxWidth', $iconSize)
+                || WatermarkHookImpl::isLarger($processionConfiguration, 'maxHeight', $iconSize)
+                || WatermarkHookImpl::isLarger($processionConfiguration, 'width', $iconSize)
+                || WatermarkHookImpl::isLarger($processionConfiguration, 'height', $iconSize))
         ) {
             return false;
         }
