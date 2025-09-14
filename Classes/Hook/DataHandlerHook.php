@@ -32,16 +32,28 @@ class DataHandlerHook implements SingletonInterface
     if ($status === 'update') {
       if ($table === 'sys_category' && $this->watermarksFieldChanged($fields)) {
         $this->watermarkService->clearProcessedFileCacheFromCategory($recordUid);
-      } elseif ($table === 'sys_file_metadata' && $this->watermarksFieldChanged($fields)) {
+      } elseif ($table === 'sys_file_metadata' && ($this->watermarksFieldChanged($fields)|| $this->categoriesChanged($fields))) {
         $this->watermarkService->clearProcessedFileCacheFromFileMetaData($recordUid);
       }
     }
   }
 
+
   private function watermarksFieldChanged(array $fields): bool
   {
     foreach (array_keys($fields) as $key) {
       if (str_starts_with($key, 'tx_cywatermark_watermark_')) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
+  private function categoriesChanged(array $fields): bool
+  {
+    foreach (array_keys($fields) as $key) {
+      if ($key == 'categories') {
         return true;
       }
     }
